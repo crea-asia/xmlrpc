@@ -315,6 +315,12 @@ func (dec *decoder) decodeValue(val reflect.Value) error {
 				return err
 			}
 			val.Set(p.Elem())
+
+			// </type>
+			if err = dec.Skip(); err != nil {
+				return err
+			}
+
 			break
 		}
 
