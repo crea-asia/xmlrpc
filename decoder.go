@@ -73,6 +73,10 @@ func unmarshal(data []byte, v interface{}) (err error) {
 	return nil
 }
 
+type xmlrpcValueUnmarshaller interface {
+	XMLRPCUnmarshal(data []byte) error
+}
+
 func (dec *decoder) decodeValue(val reflect.Value) error {
 	var tok xml.Token
 	var err error
@@ -302,6 +306,16 @@ func (dec *decoder) decodeValue(val reflect.Value) error {
 			data = []byte(t.Copy())
 		default:
 			return invalidXmlError
+		}
+
+		p := reflect.New(val.Type())
+
+		if unmarshaller, ok := p.Interface().(xmlrpcValueUnmarshaller); ok {
+			if err := unmarshaller.XMLRPCUnmarshal(data); err != nil {
+				return err
+			}
+			val.Set(p.Elem())
+			break
 		}
 
 		switch typeName {

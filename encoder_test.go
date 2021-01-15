@@ -1,9 +1,21 @@
 package xmlrpc
 
 import (
+	"encoding/json"
+	"strconv"
 	"testing"
 	"time"
 )
+
+type CustomLong int64
+
+func (c *CustomLong) XMLRPCUnmarshal(data []byte) error {
+	return json.Unmarshal(data, c)
+}
+
+func (c CustomLong) XMLRPCMarshal() ([]byte, error) {
+	return []byte("<long>" + strconv.FormatInt(int64(c), 10) + "</long>"), nil
+}
 
 var marshalTests = []struct {
 	value interface{}
@@ -27,6 +39,9 @@ var marshalTests = []struct {
 	{&struct {
 		Value interface{} `xmlrpc:"value"`
 	}{}, "<value><struct><member><name>value</name><value/></member></struct></value>"},
+	{&struct {
+		Value CustomLong `xmlrpc:"customLong"`
+	}{Value: 100500}, "<value><struct><member><name>customLong</name><value><long>100500</long></value></member></struct></value>"},
 	{
 		map[string]interface{}{"title": "War and Piece", "amount": 20},
 		"<value><struct><member><name>amount</name><value><int>20</int></value></member><member><name>title</name><value><string>War and Piece</string></value></member></struct></value>",

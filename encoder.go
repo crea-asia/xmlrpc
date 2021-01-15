@@ -25,9 +25,24 @@ func marshal(v interface{}) ([]byte, error) {
 	return encodeValue(val)
 }
 
+type xmlrpcValueMarshaller interface {
+	XMLRPCMarshal() ([]byte, error)
+}
+
 func encodeValue(val reflect.Value) ([]byte, error) {
-	var b []byte
-	var err error
+	var (
+		b   []byte
+		err error
+	)
+
+	if marshaller, ok := val.Interface().(xmlrpcValueMarshaller); ok {
+		b, err = marshaller.XMLRPCMarshal()
+		if err != nil {
+			return nil, err
+		}
+
+		return []byte(fmt.Sprintf("<value>%s</value>", string(b))), nil
+	}
 
 	if val.Kind() == reflect.Ptr || val.Kind() == reflect.Interface {
 		if val.IsNil() {
